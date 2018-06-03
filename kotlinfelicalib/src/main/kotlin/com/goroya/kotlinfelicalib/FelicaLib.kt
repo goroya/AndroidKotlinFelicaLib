@@ -5,13 +5,10 @@ import android.content.Intent
 import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.app.PendingIntent
-import android.content.IntentFilter.MalformedMimeTypeException
 import android.content.IntentFilter
-import com.goroya.kotlinfelicalib.command.PollingCC
-import android.R.attr.tag
 import android.app.Activity
 import android.nfc.tech.NfcF
-import com.goroya.kotlinfelicalib.command.PollingRC
+import com.goroya.kotlinfelicalib.command.*
 import java.io.IOException
 
 
@@ -82,17 +79,49 @@ class FelicaLib(val tag: Tag) {
     }
 
     @Throws(FelicaLibException::class)
+    private fun transfer(rawData: ByteArray): ByteArray{
+        try {
+            this.nfcf.connect()
+            val receiveData = this.nfcf.transceive(rawData)
+            this.nfcf.close()
+            return receiveData
+        } catch (ex: IOException) {
+            throw FelicaLibException(ex)
+        } catch (ex: FelicaLibException) {
+            throw FelicaLibException(ex)
+        }
+    }
+
+    @Throws(FelicaLibException::class)
     fun polling(systemCode: Int,
                 requestCode: PollingCC.RequestCode,
                 timeSlot: PollingCC.TimeSlot): PollingRC {
         try {
-            this.nfcf.connect()
             val cmdData = PollingCC(systemCode, requestCode, timeSlot)
-            val receiveData = this.nfcf.transceive(cmdData.rawData)
-            this.nfcf.close()
+            val receiveData = this.transfer(cmdData.rawData)
             return PollingRC(receiveData)
-        } catch (ex: IOException) {
+        } catch (ex: FelicaLibException) {
             throw FelicaLibException(ex)
+        }
+    }
+
+    @Throws(FelicaLibException::class)
+    fun requestService(idm: ByteArray, nodeCodeList: IntArray): RequestServiceRC {
+        try {
+            val cmdData = RequestServiceCC(idm, nodeCodeList.size, nodeCodeList)
+            val receiveData = this.transfer(cmdData.rawData)
+            return RequestServiceRC(receiveData)
+        } catch (ex: FelicaLibException) {
+            throw FelicaLibException(ex)
+        }
+    }
+
+    @Throws(FelicaLibException::class)
+    fun requestResponse(idm: ByteArray): RequestResponseRC {
+        try {
+            val cmdData = RequestResponseCC(idm)
+            val receiveData = this.transfer(cmdData.rawData)
+            return RequestResponseRC(receiveData)
         } catch (ex: FelicaLibException) {
             throw FelicaLibException(ex)
         }

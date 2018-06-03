@@ -1,8 +1,10 @@
 package com.goroya.kotlinfelicalib.command
 
+import android.util.Log
 import com.goroya.kotlinfelicalib.util.Util
+import java.io.ByteArrayOutputStream
 
-class CommandCode{
+class CommandCode {
     companion object {
         const val Polling = 0x00
         const val RequestService = 0x02
@@ -27,7 +29,7 @@ class CommandCode{
     }
 }
 
-class ResponseCode{
+class ResponseCode {
     companion object {
         const val Polling = 0x01
         const val RequestService = 0x03
@@ -55,7 +57,7 @@ class ResponseCode{
 class PollingCC(
         private val systemCode: Int,
         private val requestCode: RequestCode,
-        private val timeSlot: TimeSlot): FelicaCmdData(){
+        private val timeSlot: TimeSlot) : FelicaCmdData() {
 
     override val cmdCode: Int
         get() = CommandCode.Polling
@@ -69,12 +71,13 @@ class PollingCC(
                     timeSlot.value)
         }
 
-    enum class RequestCode(val value: Byte)  {
+    enum class RequestCode(val value: Byte) {
         NoRequest(0x00),
         SystemCodeRequest(0x01),
         CommunicationPerformanceRequest(0x02),
     }
-    enum class TimeSlot(val value: Byte)  {
+
+    enum class TimeSlot(val value: Byte) {
         MaximumNumberOfSlot1(0x00),
         MaximumNumberOfSlot2(0x01),
         MaximumNumberOfSlot4(0x03),
@@ -83,36 +86,37 @@ class PollingCC(
     }
 }
 
-class PollingRC(val data:ByteArray){
+class PollingRC(val data: ByteArray) {
     val length: Int
     val responseCode: Int
     val idm: ByteArray
-    val pmm:ByteArray
+    val pmm: ByteArray
     val requestData: Int
+
     init {
-        if(data.isEmpty()){
+        if (data.isEmpty()) {
             this.length = 0
-        }else{
+        } else {
             this.length = data[0].toInt()
         }
-        if(data.size < 2){
+        if (data.size < 2) {
             this.responseCode = 0
-        }else{
+        } else {
             this.responseCode = data[1].toInt()
         }
-        if(data.size < 10){
+        if (data.size < 10) {
             this.idm = byteArrayOf()
-        }else{
+        } else {
             this.idm = data.slice(2..9).toByteArray()
         }
-        if(data.size < 18){
+        if (data.size < 18) {
             this.pmm = byteArrayOf()
-        }else{
+        } else {
             this.pmm = data.slice(10..17).toByteArray()
         }
-        if(data.size < 20){
+        if (data.size < 20) {
             this.requestData = 0
-        }else{
+        } else {
             this.requestData = (data[18].toInt() and 0xFF shl 8) or (data[19].toInt() and 0xFF)
 
         }
@@ -120,17 +124,146 @@ class PollingRC(val data:ByteArray){
     }
 
     override fun toString(): String {
-        val str = """
+        return """
             data: ${Util.getByte2HexString(this.data)}
             length: ${this.length}
             responseCode: ${this.responseCode}
             idm: ${Util.getByte2HexString(this.idm)}
             pmm: ${Util.getByte2HexString(this.pmm)}
             requestData: ${this.requestData.toString(16)}
-        """
+        """.trimIndent()
+    }
+}
+
+class RequestServiceCC(
+        private val idm: ByteArray,
+        private val numberofNode: Int,
+        private val nodeCodeList: IntArray) : FelicaCmdData() {
+
+    override val cmdCode: Int
+        get() = CommandCode.RequestService
+
+    override val payload: ByteArray
+        get() {
+            val byteStream = ByteArrayOutputStream()
+            byteStream.also {
+                it.write(this.idm)
+                it.write(numberofNode)
+                for (nodeCode in nodeCodeList) {
+                    it.write(nodeCode and 0xFF)
+                    it.write((nodeCode ushr 8) and 0xFF)
+                }
+            }
+            return byteStream.toByteArray()
+        }
+}
+
+class RequestServiceRC(val data: ByteArray) {
+    val length: Int
+    val responseCode: Int
+    val idm: ByteArray
+    val numberOfNode: Int
+    val nodeKeyVersionList: IntArray
+
+    init {
+        if (data.isEmpty()) {
+            this.length = 0
+        } else {
+            this.length = data[0].toInt()
+        }
+        if (data.size < 2) {
+            this.responseCode = 0
+        } else {
+            this.responseCode = data[1].toInt()
+        }
+        if (data.size < 10) {
+            this.idm = byteArrayOf()
+        } else {
+            this.idm = data.slice(2..9).toByteArray()
+        }
+        if (data.size < 11) {
+            this.numberOfNode = 0
+            this.nodeKeyVersionList = intArrayOf()
+        } else {
+            this.numberOfNode = data[10].toInt()
+            val tempIntArray = mutableListOf<Int>()
+            for (index in 0 until this.numberOfNode) {
+                if ((10 + index * 2 + 1) < data.size) {
+                    val nodeCode = ((data[11 + index * 2 + 1].toInt() and 0xFF) shl 8) or (data[11 + index * 2].toInt() and 0xFF)
+                    tempIntArray.add(nodeCode)
+                }
+            }
+            this.nodeKeyVersionList = tempIntArray.toIntArray()
+        }
+
+    }
+
+    override fun toString(): String {
+        var str = """
+            data: ${Util.getByte2HexString(this.data)}
+            length: ${this.length}
+            responseCode: ${this.responseCode.toString(16)}
+            idm: ${Util.getByte2HexString(this.idm)}
+            numberOfNode: ${this.numberOfNode}
+        """.trimIndent()
+        str += "%n".format()
+        for ((index, nodeKeyVersion) in this.nodeKeyVersionList.withIndex()) {
+            str += "nodeKeyVersionList[$index] :$nodeKeyVersion%n".format()
+        }
         return str
     }
 }
 
+class RequestResponseCC(private val idm: ByteArray) : FelicaCmdData() {
+    override val cmdCode: Int
+        get() = CommandCode.RequestResponse
 
+    override val payload: ByteArray
+        get() {
+            val byteStream = ByteArrayOutputStream()
+            byteStream.also {
+                it.write(this.idm)
+            }
+            return byteStream.toByteArray()
+        }
+}
 
+class RequestResponseRC(val data: ByteArray) {
+    val length: Int
+    val responseCode: Int
+    val idm: ByteArray
+    val mode: Int
+
+    init {
+        if (data.isEmpty()) {
+            this.length = 0
+        } else {
+            this.length = data[0].toInt()
+        }
+        if (data.size < 2) {
+            this.responseCode = 0
+        } else {
+            this.responseCode = data[1].toInt()
+        }
+        if (data.size < 10) {
+            this.idm = byteArrayOf()
+        } else {
+            this.idm = data.slice(2..9).toByteArray()
+        }
+        if (data.size < 11) {
+            this.mode = 0xFFFF
+        } else {
+            this.mode = data[10].toInt()
+        }
+    }
+
+    override fun toString(): String {
+        return """
+            data: ${Util.getByte2HexString(this.data)}
+            length: ${this.length}
+            responseCode: ${this.responseCode.toString(16)}
+            idm: ${Util.getByte2HexString(this.idm)}
+            mode: ${this.mode}
+        """.trimIndent()
+    }
+}
