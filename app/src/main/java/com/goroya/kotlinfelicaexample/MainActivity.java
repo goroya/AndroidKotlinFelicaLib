@@ -3,19 +3,20 @@ package com.goroya.kotlinfelicaexample;
 import android.content.Intent;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 
 import com.goroya.kotlinfelicalib.FelicaLib;
 import com.goroya.kotlinfelicalib.FelicaLibException;
 import com.goroya.kotlinfelicalib.command.BlockElement;
 import com.goroya.kotlinfelicalib.command.PollingCC;
 import com.goroya.kotlinfelicalib.command.PollingRC;
-import com.goroya.kotlinfelicalib.command.ReadWithoutEncryptionCC;
 import com.goroya.kotlinfelicalib.command.ReadWithoutEncryptionRC;
 import com.goroya.kotlinfelicalib.command.RequestResponseRC;
 import com.goroya.kotlinfelicalib.command.RequestServiceRC;
 import com.goroya.kotlinfelicalib.command.RequestSystemCodeRC;
+import com.goroya.kotlinfelicalib.command.ResetModeCC;
+import com.goroya.kotlinfelicalib.command.ResetModeRC;
 import com.orhanobut.logger.AndroidLogAdapter;
 import com.orhanobut.logger.Logger;
 
@@ -38,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
         super.onNewIntent(intent);
         Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
         FelicaLib felica = new FelicaLib(tag);
-        try{
+        try {
             PollingRC pollingRes = felica.polling(
                     0xFFFF,
                     PollingCC.RequestCode.SystemCodeRequest,
@@ -49,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
 
             RequestServiceRC requestServiceRes = felica.requestService(
                     pollingRes.getIdm(),
-                    new int[] {0x000F, 0x000F}
+                    new int[]{0x000F, 0x000F}
             );
             Logger.d("RequestServiceRes");
             Logger.d(requestServiceRes);
@@ -61,12 +62,12 @@ public class MainActivity extends AppCompatActivity {
             Logger.d(requestResponseRC);
 
             int[] a = {0x090f};
-            BlockElement bl1 =new BlockElement(
+            BlockElement bl1 = new BlockElement(
                     BlockElement.Length.BlockListElementOf2Byte,
                     BlockElement.AccessMode.ReadOperationOrWriteOperation,
                     0,
                     0);
-            BlockElement bl2 =new BlockElement(
+            BlockElement bl2 = new BlockElement(
                     BlockElement.Length.BlockListElementOf2Byte,
                     BlockElement.AccessMode.ReadOperationOrWriteOperation,
                     0,
@@ -81,12 +82,28 @@ public class MainActivity extends AppCompatActivity {
             Logger.d("readWithoutEncryption");
             Logger.d(readWithoutEncryptionCC);
 
-            RequestSystemCodeRC requestSystemCode = felica.RequestSystemCode(
+            RequestSystemCodeRC requestSystemCode = felica.requestSystemCode(
                     pollingRes.getIdm()
             );
             Logger.d("RequestSystemCode");
             Logger.d(requestSystemCode);
-        }catch (FelicaLibException ex){
+
+            /*
+            RequestSpecificationVersionRC requestSpecificationVersion = felica.requestSpecificationVersion(
+                    pollingRes.getIdm()
+            );
+            Logger.d("RequestSpecificationVersion");
+            Logger.d(requestSpecificationVersion);
+            */
+
+            /*
+            ResetModeRC resetMode = felica.resetMode(
+                    pollingRes.getIdm()
+            );
+            Logger.d("ResetMode");
+            Logger.d(resetMode);
+            */
+        } catch (FelicaLibException ex) {
             Logger.d("FelicaLibException");
             Logger.d(ex.getMessage());
         }

@@ -9,6 +9,7 @@ import android.content.IntentFilter
 import android.app.Activity
 import android.nfc.tech.NfcF
 import com.goroya.kotlinfelicalib.command.*
+import com.goroya.kotlinfelicalib.util.Util
 import java.io.IOException
 
 
@@ -144,7 +145,7 @@ class FelicaLib(val tag: Tag) {
     }
 
     @Throws(FelicaLibException::class)
-    fun RequestSystemCode( idm: ByteArray): RequestSystemCodeRC {
+    fun requestSystemCode(idm: ByteArray): RequestSystemCodeRC {
         try {
             val cmdData = RequestSystemCodeCC(idm)
             val receiveData = this.transfer(cmdData.rawData)
@@ -153,4 +154,31 @@ class FelicaLib(val tag: Tag) {
             throw FelicaLibException(ex)
         }
     }
+
+    /*
+    @Throws(FelicaLibException::class)
+    fun requestSpecificationVersion(idm: ByteArray): RequestSpecificationVersionRC {
+        try {
+            val cmdData = RequestSpecificationVersionCC(idm)
+            val receiveData = this.transfer(cmdData.rawData)
+            println(Util.getByte2HexString(receiveData))
+            return RequestSpecificationVersionRC(receiveData)
+        } catch (ex: FelicaLibException) {
+            throw FelicaLibException(ex)
+        }
+    }
+    */
+
+    /*
+    @Throws(FelicaLibException::class)
+    fun resetMode(idm: ByteArray): ResetModeRC {
+        try {
+            val cmdData = ResetModeCC(idm)
+            val receiveData = this.transfer(cmdData.rawData)
+            return ResetModeRC(receiveData)
+        } catch (ex: FelicaLibException) {
+            throw FelicaLibException(ex)
+        }
+    }
+    */
 }

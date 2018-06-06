@@ -455,7 +455,6 @@ class RequestSystemCodeRC(val data: ByteArray) {
             this.systemCodeList = intArrayOf()
         } else {
             this.numberOfSystemCode = data[10].toInt()
-            println(this.numberOfSystemCode)
             this.systemCodeList = IntArray(this.numberOfSystemCode)
             for(i in 0 until this.numberOfSystemCode){
                 this.systemCodeList[i] = (data[11 + i * 2].toInt() and 0xFF shl 8) or (data[11 + i * 2 + 1].toInt() and 0xFF)
@@ -478,3 +477,170 @@ class RequestSystemCodeRC(val data: ByteArray) {
         return str
     }
 }
+
+/*
+class RequestSpecificationVersionCC(private val idm: ByteArray) : FelicaCmdData() {
+    override val cmdCode: Int
+        get() = CommandCode.RequestSpecificationVersion
+
+    override val payload: ByteArray
+        get() {
+            val byteStream = ByteArrayOutputStream()
+            byteStream.also {
+                it.write(this.idm)
+            }
+            // Reserved
+            byteStream.write(0x00)
+            byteStream.write(0x00)
+            return byteStream.toByteArray()
+        }
+}
+
+class RequestSpecificationVersionRC(val data: ByteArray) {
+    val length: Int
+    val responseCode: Int
+    val idm: ByteArray
+    val statusFlag1: Int
+    val statusFlag2: Int
+    val formatVersion: Int
+    val basicVersion: Int
+    val numberofOption: Int
+    val optionVersionList: IntArray
+    init {
+        if (data.isEmpty()) {
+            this.length = 0
+        } else {
+            this.length = data[0].toInt()
+        }
+        if (data.size < 2) {
+            this.responseCode = 0
+        } else {
+            this.responseCode = data[1].toInt()
+        }
+        if (data.size < 10) {
+            this.idm = byteArrayOf()
+        } else {
+            this.idm = data.slice(2..9).toByteArray()
+        }
+        if (data.size < 11) {
+            this.statusFlag1 = 0xFFFF
+        } else {
+            this.statusFlag1 = data[10].toInt()
+        }
+        if (data.size < 12) {
+            this.statusFlag2 = 0xFFFF
+        } else {
+            this.statusFlag2 = data[11].toInt()
+        }
+        var offset = 0
+        if (data.size < 14) {
+            this.formatVersion = 0
+            this.basicVersion = 0
+            this.numberofOption = 0
+            this.optionVersionList = intArrayOf()
+        }else{
+            if(this.statusFlag1 == 0x00){
+                offset += 3
+                this.formatVersion = data[12].toInt()
+                this.basicVersion =  (data[14].toInt() and 0xFF shl 8) or (data[13].toInt() and 0xFF)
+            }else{
+                this.formatVersion = 0
+                this.basicVersion = 0
+            }
+            this.numberofOption = data[12 + offset].toInt()
+            this.optionVersionList = IntArray(this.numberofOption)
+            for(i in 0 until this.numberofOption){
+                this.optionVersionList[i] =
+                        (data[14 + offset + i * 2].toInt() and 0xFF shl 8) or (data[13 + offset + i * 2].toInt() and 0xFF)
+            }
+        }
+
+    }
+
+    override fun toString(): String {
+        var str =  """
+            data: ${Util.getByte2HexString(this.data)}
+            length: ${this.length}
+            responseCode: ${this.responseCode.toString(16)}
+            idm: ${Util.getByte2HexString(this.idm)}
+            statusFlag1: ${this.statusFlag1}
+            statusFlag2: ${this.statusFlag2}
+            formatVersion: ${this.formatVersion}
+            formatVersion: ${this.basicVersion}
+            numberofOption: ${this.numberofOption}
+        """.trimIndent()
+        str += "%n".format()
+        for ((index, optionVersionElm) in this.optionVersionList.withIndex()) {
+            str += "optionVersionList[$index] :${String.format("%04X", optionVersionElm)}%n".format()
+        }
+        return str
+    }
+}
+*/
+
+
+/*
+class ResetModeCC(private val idm: ByteArray) : FelicaCmdData() {
+    override val cmdCode: Int
+        get() = CommandCode.ResetMode
+
+    override val payload: ByteArray
+        get() {
+            val byteStream = ByteArrayOutputStream()
+            byteStream.also {
+                it.write(this.idm)
+            }
+            // Reserved
+            byteStream.write(0x00)
+            byteStream.write(0x00)
+            return byteStream.toByteArray()
+        }
+}
+
+class ResetModeRC(val data: ByteArray) {
+    val length: Int
+    val responseCode: Int
+    val idm: ByteArray
+    val statusFlag1: Int
+    val statusFlag2: Int
+
+    init {
+        if (data.isEmpty()) {
+            this.length = 0
+        } else {
+            this.length = data[0].toInt()
+        }
+        if (data.size < 2) {
+            this.responseCode = 0
+        } else {
+            this.responseCode = data[1].toInt()
+        }
+        if (data.size < 10) {
+            this.idm = byteArrayOf()
+        } else {
+            this.idm = data.slice(2..9).toByteArray()
+        }
+        if (data.size < 11) {
+            this.statusFlag1 = 0
+        } else {
+            this.statusFlag1 = data[10].toInt()
+        }
+        if (data.size < 12) {
+            this.statusFlag2 = 0
+        } else {
+            this.statusFlag2 = data[11].toInt()
+        }
+    }
+
+    override fun toString(): String {
+        return """
+            data: ${Util.getByte2HexString(this.data)}
+            length: ${this.length}
+            responseCode: ${this.responseCode.toString(16)}
+            idm: ${Util.getByte2HexString(this.idm)}
+            statusFlag1: ${this.statusFlag1}
+            statusFlag2: ${this.statusFlag2}
+        """.trimIndent()
+    }
+}
+*/
