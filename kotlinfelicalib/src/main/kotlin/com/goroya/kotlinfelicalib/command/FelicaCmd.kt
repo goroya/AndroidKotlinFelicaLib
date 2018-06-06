@@ -267,3 +267,148 @@ class RequestResponseRC(val data: ByteArray) {
         """.trimIndent()
     }
 }
+
+class BlockElement(
+        length: Length = Length.BlockListElementOf2Byte,
+        accessMode: AccessMode = AccessMode.ReadOperationOrWriteOperation,
+        serviceCodeListOrder: Int,
+        blockNumber: Int) {
+    enum class Length(val value: Int) {
+        BlockListElementOf2Byte(0b1),
+        BlockListElementOf3Byte(0b0),
+    }
+
+    enum class AccessMode(val value: Int) {
+        ReadOperationOrWriteOperation(0b000),
+        CashBackAccessToPurseService(0b001),
+    }
+    val rawData: ByteArray
+    init {
+        val byteStream = ByteArrayOutputStream()
+        byteStream.write(
+                (length.value shl 7) or (accessMode.value shl 4) or serviceCodeListOrder)
+        if (length == Length.BlockListElementOf2Byte) {
+            byteStream.write(blockNumber and 0xFF)
+        } else if (length == Length.BlockListElementOf3Byte) {
+            byteStream.write(blockNumber and 0xFF)
+            byteStream.write((blockNumber ushr 8) and 0xFF)
+        }
+        this.rawData = byteStream.toByteArray()
+    }
+}
+
+class ReadWithoutEncryptionCC(
+        private val idm: ByteArray,
+        private val numberOfService: Int,
+        private val serviceCodeList: IntArray,
+        private val numberOfBlock: Int,
+        private val blockList: ArrayList<BlockElement>
+) : FelicaCmdData() {
+    override val cmdCode: Int
+        get() = CommandCode.ReadWithoutEncryption
+
+    override val payload: ByteArray
+        get() {
+            val byteStream = ByteArrayOutputStream()
+            byteStream.also {
+                it.write(this.idm)
+                it.write(this.numberOfService)
+                for(serviceCode in this.serviceCodeList){
+                    it.write(serviceCode and 0xFF)
+                    it.write((serviceCode ushr 8) and 0xFF)
+                }
+                it.write(this.numberOfBlock)
+                for(blockElement in this.blockList){
+                    for(elem in blockElement.rawData){
+                        it.write(elem.toInt())
+                    }
+                }
+            }
+            return byteStream.toByteArray()
+        }
+}
+
+class ReadWithoutEncryptionRC(val data: ByteArray) {
+    val length: Int
+    val responseCode: Int
+    val idm: ByteArray
+    val statusFlag1: Int
+    val statusFlag2: Int
+    val numberOfBlock: Int
+    val blockData: MutableList<ByteArray> = mutableListOf()
+
+    init {
+        if (data.isEmpty()) {
+            this.length = 0
+        } else {
+            this.length = data[0].toInt()
+        }
+        if (data.size < 2) {
+            this.responseCode = 0
+        } else {
+            this.responseCode = data[1].toInt()
+        }
+        if (data.size < 10) {
+            this.idm = byteArrayOf()
+        } else {
+            this.idm = data.slice(2..9).toByteArray()
+        }
+        if (data.size < 11) {
+            this.statusFlag1 = 0
+        } else {
+            this.statusFlag1 = data[10].toInt()
+        }
+        if (data.size < 12) {
+            this.statusFlag2 = 0
+        } else {
+            this.statusFlag2 = data[11].toInt()
+        }
+        if (data.size < 13) {
+            this.numberOfBlock = 0
+        }else{
+            this.numberOfBlock = data[12].toInt()
+            for(i in 0 until this.numberOfBlock){
+                blockData.add( data.slice((13 + i * 16)..(13 + i * 16 + 15)).toByteArray())
+            }
+        }
+    }
+
+    override fun toString(): String {
+        var str = """
+            data: ${Util.getByte2HexString(this.data)}
+            length: ${this.length}
+            responseCode: ${this.responseCode.toString(16)}
+            idm: ${Util.getByte2HexString(this.idm)}
+            statusFlag1: ${this.statusFlag1}
+            statusFlag2: ${this.statusFlag2}
+            numberOfBlock: ${this.numberOfBlock}
+        """.trimIndent()
+        str += "%n".format()
+        for ((index, blockDataElm) in this.blockData.withIndex()) {
+            str += "nodeKeyVersionList[$index] :${Util.getByte2HexString(blockDataElm)}%n".format()
+        }
+        return str
+    }
+}
+
+class WriteWithoutEncryptionCC(
+        private val idm: ByteArray,
+        private val numberofServic: Int,
+        private val serviceCodeList: IntArray,
+        private val numberofBlock: Int,
+        private val blockList: IntArray,
+        private val blockData: Array<ByteArray>
+) : FelicaCmdData() {
+    override val cmdCode: Int
+        get() = CommandCode.WriteWithoutEncryption
+
+    override val payload: ByteArray
+        get() {
+            val byteStream = ByteArrayOutputStream()
+            byteStream.also {
+                it.write(this.idm)
+            }
+            return byteStream.toByteArray()
+        }
+}
+

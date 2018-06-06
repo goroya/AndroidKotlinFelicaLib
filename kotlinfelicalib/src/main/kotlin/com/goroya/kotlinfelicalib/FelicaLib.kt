@@ -126,4 +126,20 @@ class FelicaLib(val tag: Tag) {
             throw FelicaLibException(ex)
         }
     }
+
+    @Throws(FelicaLibException::class)
+    fun readWithoutEncryption( idm: ByteArray,
+                               serviceCodeList: IntArray,
+                               blockList: ArrayList<BlockElement>): ReadWithoutEncryptionRC {
+        try {
+            val cmdData = ReadWithoutEncryptionCC(
+                    idm,
+                    serviceCodeList.size, serviceCodeList,
+                    blockList.size, blockList)
+            val receiveData = this.transfer(cmdData.rawData)
+            return ReadWithoutEncryptionRC(receiveData)
+        } catch (ex: FelicaLibException) {
+            throw FelicaLibException(ex)
+        }
+    }
 }

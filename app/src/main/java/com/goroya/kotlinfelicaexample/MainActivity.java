@@ -8,12 +8,17 @@ import android.os.Bundle;
 
 import com.goroya.kotlinfelicalib.FelicaLib;
 import com.goroya.kotlinfelicalib.FelicaLibException;
+import com.goroya.kotlinfelicalib.command.BlockElement;
 import com.goroya.kotlinfelicalib.command.PollingCC;
 import com.goroya.kotlinfelicalib.command.PollingRC;
+import com.goroya.kotlinfelicalib.command.ReadWithoutEncryptionCC;
+import com.goroya.kotlinfelicalib.command.ReadWithoutEncryptionRC;
 import com.goroya.kotlinfelicalib.command.RequestResponseRC;
 import com.goroya.kotlinfelicalib.command.RequestServiceRC;
 import com.orhanobut.logger.AndroidLogAdapter;
 import com.orhanobut.logger.Logger;
+
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -53,6 +58,27 @@ public class MainActivity extends AppCompatActivity {
             );
             Logger.d("RequestResponse");
             Logger.d(requestResponseRC);
+
+            int[] a = {0x090f};
+            BlockElement bl1 =new BlockElement(
+                    BlockElement.Length.BlockListElementOf2Byte,
+                    BlockElement.AccessMode.ReadOperationOrWriteOperation,
+                    0,
+                    0);
+            BlockElement bl2 =new BlockElement(
+                    BlockElement.Length.BlockListElementOf2Byte,
+                    BlockElement.AccessMode.ReadOperationOrWriteOperation,
+                    0,
+                    1);
+            ArrayList<BlockElement> bl = new ArrayList<>();
+            bl.add(bl1);
+            bl.add(bl2);
+
+            ReadWithoutEncryptionRC readWithoutEncryptionCC = felica.readWithoutEncryption(
+                    pollingRes.getIdm(), a, bl
+            );
+            Logger.d("readWithoutEncryptionCC");
+            Logger.d(readWithoutEncryptionCC);
         }catch (FelicaLibException ex){
             Logger.d("FelicaLibException");
             Logger.d(ex.getMessage());
