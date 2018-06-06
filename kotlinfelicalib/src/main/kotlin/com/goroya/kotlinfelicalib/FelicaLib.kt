@@ -142,4 +142,15 @@ class FelicaLib(val tag: Tag) {
             throw FelicaLibException(ex)
         }
     }
+
+    @Throws(FelicaLibException::class)
+    fun RequestSystemCode( idm: ByteArray): RequestSystemCodeRC {
+        try {
+            val cmdData = RequestSystemCodeCC(idm)
+            val receiveData = this.transfer(cmdData.rawData)
+            return RequestSystemCodeRC(receiveData)
+        } catch (ex: FelicaLibException) {
+            throw FelicaLibException(ex)
+        }
+    }
 }

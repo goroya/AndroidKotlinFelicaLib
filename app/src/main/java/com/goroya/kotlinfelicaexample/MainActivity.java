@@ -15,6 +15,7 @@ import com.goroya.kotlinfelicalib.command.ReadWithoutEncryptionCC;
 import com.goroya.kotlinfelicalib.command.ReadWithoutEncryptionRC;
 import com.goroya.kotlinfelicalib.command.RequestResponseRC;
 import com.goroya.kotlinfelicalib.command.RequestServiceRC;
+import com.goroya.kotlinfelicalib.command.RequestSystemCodeRC;
 import com.orhanobut.logger.AndroidLogAdapter;
 import com.orhanobut.logger.Logger;
 
@@ -77,8 +78,14 @@ public class MainActivity extends AppCompatActivity {
             ReadWithoutEncryptionRC readWithoutEncryptionCC = felica.readWithoutEncryption(
                     pollingRes.getIdm(), a, bl
             );
-            Logger.d("readWithoutEncryptionCC");
+            Logger.d("readWithoutEncryption");
             Logger.d(readWithoutEncryptionCC);
+
+            RequestSystemCodeRC requestSystemCode = felica.RequestSystemCode(
+                    pollingRes.getIdm()
+            );
+            Logger.d("RequestSystemCode");
+            Logger.d(requestSystemCode);
         }catch (FelicaLibException ex){
             Logger.d("FelicaLibException");
             Logger.d(ex.getMessage());

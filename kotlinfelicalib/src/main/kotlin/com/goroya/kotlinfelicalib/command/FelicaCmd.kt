@@ -14,17 +14,17 @@ class CommandCode {
         const val SearchServiceCode = 0x0A
         const val RequestSystemCode = 0x0C
         const val Authentication1 = 0x10
-        const val Authentication2 = 0x12
-        const val Read = 0x14
-        const val Write = 0x16
+        const val Authentication2 = 0x12  //
+        const val Read = 0x14  //
+        const val Write = 0x16  //
         const val RequestServiceV2 = 0x32
         const val GetSystemStatus = 0x38
         const val RequestSpecificationVersion = 0x3C
         const val ResetMode = 0x3E
         const val Authentication1V2 = 0x40
         const val Authentication2V2 = 0x42
-        const val ReadV2 = 0x44
-        const val WriteV2 = 0x46
+        const val ReadV2 = 0x44  //
+        const val WriteV2 = 0x46  //
         const val UpdateRandomID = 0x4C
     }
 }
@@ -412,3 +412,69 @@ class WriteWithoutEncryptionCC(
         }
 }
 
+
+class RequestSystemCodeCC(private val idm: ByteArray) : FelicaCmdData() {
+    override val cmdCode: Int
+        get() = CommandCode.RequestSystemCode
+
+    override val payload: ByteArray
+        get() {
+            val byteStream = ByteArrayOutputStream()
+            byteStream.also {
+                it.write(this.idm)
+            }
+            return byteStream.toByteArray()
+        }
+}
+
+class RequestSystemCodeRC(val data: ByteArray) {
+    val length: Int
+    val responseCode: Int
+    val idm: ByteArray
+    val numberOfSystemCode: Int
+    val systemCodeList: IntArray
+
+    init {
+        if (data.isEmpty()) {
+            this.length = 0
+        } else {
+            this.length = data[0].toInt()
+        }
+        if (data.size < 2) {
+            this.responseCode = 0
+        } else {
+            this.responseCode = data[1].toInt()
+        }
+        if (data.size < 10) {
+            this.idm = byteArrayOf()
+        } else {
+            this.idm = data.slice(2..9).toByteArray()
+        }
+        if (data.size < 11) {
+            this.numberOfSystemCode = 0
+            this.systemCodeList = intArrayOf()
+        } else {
+            this.numberOfSystemCode = data[10].toInt()
+            println(this.numberOfSystemCode)
+            this.systemCodeList = IntArray(this.numberOfSystemCode)
+            for(i in 0 until this.numberOfSystemCode){
+                this.systemCodeList[i] = (data[11 + i * 2].toInt() and 0xFF shl 8) or (data[11 + i * 2 + 1].toInt() and 0xFF)
+            }
+        }
+    }
+
+    override fun toString(): String {
+        var str =  """
+            data: ${Util.getByte2HexString(this.data)}
+            length: ${this.length}
+            responseCode: ${this.responseCode.toString(16)}
+            idm: ${Util.getByte2HexString(this.idm)}
+            numberOfSystemCode: ${this.numberOfSystemCode}
+        """.trimIndent()
+        str += "%n".format()
+        for ((index, blockDataElm) in this.systemCodeList.withIndex()) {
+            str += "systemCodeList[$index] :${String.format("%04X", blockDataElm)}%n".format()
+        }
+        return str
+    }
+}
