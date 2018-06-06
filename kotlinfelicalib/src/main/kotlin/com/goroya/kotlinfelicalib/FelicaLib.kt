@@ -80,7 +80,7 @@ class FelicaLib(val tag: Tag) {
     }
 
     @Throws(FelicaLibException::class)
-    private fun transfer(rawData: ByteArray): ByteArray{
+    private fun transfer(rawData: ByteArray): ByteArray {
         try {
             this.nfcf.connect()
             val receiveData = this.nfcf.transceive(rawData)
@@ -129,9 +129,9 @@ class FelicaLib(val tag: Tag) {
     }
 
     @Throws(FelicaLibException::class)
-    fun readWithoutEncryption( idm: ByteArray,
-                               serviceCodeList: IntArray,
-                               blockList: ArrayList<BlockElement>): ReadWithoutEncryptionRC {
+    fun readWithoutEncryption(idm: ByteArray,
+                              serviceCodeList: IntArray,
+                              blockList: ArrayList<BlockElement>): ReadWithoutEncryptionRC {
         try {
             val cmdData = ReadWithoutEncryptionCC(
                     idm,
@@ -139,6 +139,23 @@ class FelicaLib(val tag: Tag) {
                     blockList.size, blockList)
             val receiveData = this.transfer(cmdData.rawData)
             return ReadWithoutEncryptionRC(receiveData)
+        } catch (ex: FelicaLibException) {
+            throw FelicaLibException(ex)
+        }
+    }
+
+    @Throws(FelicaLibException::class)
+    fun writeWithoutEncryption(idm: ByteArray,
+                               serviceCodeList: IntArray,
+                               blockList: ArrayList<BlockElement>,
+                               blockData: Array<ByteArray>): WriteWithoutEncryptionRC {
+        try {
+            val cmdData = WriteWithoutEncryptionCC(
+                    idm,
+                    serviceCodeList.size, serviceCodeList,
+                    blockList.size, blockList, blockData)
+            val receiveData = this.transfer(cmdData.rawData)
+            return WriteWithoutEncryptionRC(receiveData)
         } catch (ex: FelicaLibException) {
             throw FelicaLibException(ex)
         }

@@ -15,11 +15,12 @@ import com.goroya.kotlinfelicalib.command.ReadWithoutEncryptionRC;
 import com.goroya.kotlinfelicalib.command.RequestResponseRC;
 import com.goroya.kotlinfelicalib.command.RequestServiceRC;
 import com.goroya.kotlinfelicalib.command.RequestSystemCodeRC;
-import com.goroya.kotlinfelicalib.command.ResetModeCC;
-import com.goroya.kotlinfelicalib.command.ResetModeRC;
+import com.goroya.kotlinfelicalib.command.WriteWithoutEncryptionCC;
+import com.goroya.kotlinfelicalib.command.WriteWithoutEncryptionRC;
 import com.orhanobut.logger.AndroidLogAdapter;
 import com.orhanobut.logger.Logger;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
@@ -61,6 +62,12 @@ public class MainActivity extends AppCompatActivity {
             Logger.d("RequestResponse");
             Logger.d(requestResponseRC);
 
+            RequestSystemCodeRC requestSystemCode = felica.requestSystemCode(
+                    pollingRes.getIdm()
+            );
+            Logger.d("RequestSystemCode");
+            Logger.d(requestSystemCode);
+
             int[] a = {0x090f};
             BlockElement bl1 = new BlockElement(
                     BlockElement.Length.BlockListElementOf2Byte,
@@ -82,12 +89,22 @@ public class MainActivity extends AppCompatActivity {
             Logger.d("readWithoutEncryption");
             Logger.d(readWithoutEncryptionCC);
 
-            RequestSystemCodeRC requestSystemCode = felica.requestSystemCode(
-                    pollingRes.getIdm()
-            );
-            Logger.d("RequestSystemCode");
-            Logger.d(requestSystemCode);
+            ArrayList<BlockElement> blw = new ArrayList<>();
+            blw.add(bl1);
 
+            byte[][] bb = {
+                    {
+                            0x11, 0x22, 0x33, 0x44,
+                            0x55, 0x66, 0x77, (byte)0x88,
+                            (byte) 0x99, (byte)0xAA, (byte)0xBB, (byte)0xCC,
+                            (byte)0xDD, (byte)0xEE, (byte)0xFF, (byte)0xFE
+                    }
+            };
+            WriteWithoutEncryptionRC writeWithoutEncryptionRC = felica.writeWithoutEncryption(
+                    pollingRes.getIdm(), a, blw, bb
+            );
+            Logger.d("writeWithoutEncryption");
+            Logger.d(writeWithoutEncryptionRC);
             /*
             RequestSpecificationVersionRC requestSpecificationVersion = felica.requestSpecificationVersion(
                     pollingRes.getIdm()
