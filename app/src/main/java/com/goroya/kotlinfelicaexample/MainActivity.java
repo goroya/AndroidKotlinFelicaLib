@@ -15,6 +15,7 @@ import com.goroya.kotlinfelicalib.command.ReadWithoutEncryptionRC;
 import com.goroya.kotlinfelicalib.command.RequestResponseRC;
 import com.goroya.kotlinfelicalib.command.RequestServiceRC;
 import com.goroya.kotlinfelicalib.command.RequestSystemCodeRC;
+import com.goroya.kotlinfelicalib.command.SearchServiceCodeRC;
 import com.goroya.kotlinfelicalib.command.WriteWithoutEncryptionCC;
 import com.goroya.kotlinfelicalib.command.WriteWithoutEncryptionRC;
 import com.orhanobut.logger.AndroidLogAdapter;
@@ -92,6 +93,7 @@ public class MainActivity extends AppCompatActivity {
             ArrayList<BlockElement> blw = new ArrayList<>();
             blw.add(bl1);
 
+            /*
             byte[][] bb = {
                     {
                             0x11, 0x22, 0x33, 0x44,
@@ -105,6 +107,17 @@ public class MainActivity extends AppCompatActivity {
             );
             Logger.d("writeWithoutEncryption");
             Logger.d(writeWithoutEncryptionRC);
+            */
+
+            for(int i = 0; i < 255; i++){
+                SearchServiceCodeRC searchServiceCodeRC = felica.searchServiceCode(
+                        pollingRes.getIdm(), i
+                );
+                Logger.d(searchServiceCodeRC);
+                if(searchServiceCodeRC.getArea().size() == 0 && searchServiceCodeRC.getServiceCode().length == 0){
+                    break;
+                }
+            }
             /*
             RequestSpecificationVersionRC requestSpecificationVersion = felica.requestSpecificationVersion(
                     pollingRes.getIdm()

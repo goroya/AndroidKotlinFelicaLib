@@ -172,6 +172,17 @@ class FelicaLib(val tag: Tag) {
         }
     }
 
+    @Throws(FelicaLibException::class)
+    fun searchServiceCode(idm: ByteArray, index: Int): SearchServiceCodeRC {
+        try {
+            val cmdData = SearchServiceCodeCC(idm, index)
+            val receiveData = this.transfer(cmdData.rawData)
+            return SearchServiceCodeRC(receiveData)
+        } catch (ex: FelicaLibException) {
+            throw FelicaLibException(ex)
+        }
+    }
+
     /*
     @Throws(FelicaLibException::class)
     fun requestSpecificationVersion(idm: ByteArray): RequestSpecificationVersionRC {

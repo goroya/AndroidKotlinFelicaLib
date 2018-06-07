@@ -541,6 +541,74 @@ class RequestSystemCodeRC(val data: ByteArray) {
         return str
     }
 }
+class SearchServiceCodeCC(private val idm: ByteArray, private val index: Int) : FelicaCmdData() {
+    override val cmdCode: Int
+        get() = CommandCode.SearchServiceCode
+
+    override val payload: ByteArray
+        get() {
+            val byteStream = ByteArrayOutputStream()
+            byteStream.also {
+                it.write(this.idm)
+                it.write(this.index and 0xFF)
+                it.write((this.index ushr 8) and 0xFF )
+            }
+            return byteStream.toByteArray()
+        }
+}
+
+class SearchServiceCodeRC(val data: ByteArray) {
+    val length: Int
+    val responseCode: Int
+    val idm: ByteArray
+    val area: ArrayList<Area>
+    val serviceCode: IntArray
+    data class Area(val start: Int, val end: Int)
+
+    init {
+        if (data.isEmpty()) {
+            this.length = 0
+        } else {
+            this.length = data[0].toInt()
+        }
+        if (data.size < 2) {
+            this.responseCode = 0
+        } else {
+            this.responseCode = data[1].toInt()
+        }
+        if (data.size < 10) {
+            this.idm = byteArrayOf()
+        } else {
+            this.idm = data.slice(2..9).toByteArray()
+        }
+        this.area = arrayListOf()
+        val temp = ((data[11].toInt() and 0xFF) shl 8) or (data[10].toInt() and 0xFF)
+        if((temp and 0x3E) == 0){
+            this.area.add(Area(temp, ((data[13].toInt() and 0xFF) shl 8) or (data[12].toInt() and 0xFF)))
+            this.serviceCode = intArrayOf()
+        }else{
+            this.serviceCode = intArrayOf(temp)
+        }
+    }
+
+    override fun toString(): String {
+        var str =  """
+            <SearchServiceCodeRC>
+            data: ${Util.getByte2HexString(this.data)}
+            length: ${this.length}
+            responseCode: ${this.responseCode.toString(16)}
+            idm: ${Util.getByte2HexString(this.idm)}
+        """.trimIndent()
+        str += "%n".format()
+        for ((index, areaElm) in this.area.withIndex()) {
+            str += "area[$index] :${String.format("%04X", areaElm.start)} ${String.format("%04X", areaElm.end)}%n".format()
+        }
+        for ((index, serviceCodeElm) in this.serviceCode.withIndex()) {
+            str += "serviceCode[$index] :${String.format("%04X", serviceCodeElm)}%n".format()
+        }
+        return str
+    }
+}
 
 /*
 class RequestSpecificationVersionCC(private val idm: ByteArray) : FelicaCmdData() {
